@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Dash</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #05051a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #title {
+      color: #0ff;
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-shadow: 0 0 12px #0ff, 0 0 24px #0ff;
+      margin-bottom: 6px;
+      letter-spacing: 4px;
+    }
+    #ui {
+      width: 900px;
+      max-width: 98vw;
+      display: flex;
+      justify-content: space-between;
+      color: white;
+      padding: 4px 6px 6px;
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+    canvas {
+      display: block;
+      max-width: 98vw;
+      border: 1px solid rgba(0,255,255,0.3);
+      box-shadow: 0 0 30px rgba(0,255,255,0.15);
+      border-radius: 4px;
+    }
+    #back {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      transition: color 0.2s, opacity 0.2s;
+    }
+    #back:hover { color: #0ff; }
+    #hint {
+      margin-top: 8px;
+      color: rgba(255,255,255,0.3);
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<a href="fromScratch.html" id="back">← Back to Cookbook</a>
+<div id="title">🍳 KITCHEN DASH</div>
+<div id="ui">
+  <span id="score-display">Score: 0</span>
+  <span id="hi-display">Best: 0</span>
+  <span id="mode-display">Press 1 (Solo) or 2 (Co-op)</span>
+</div>
+<canvas id="game" width="900" height="400"></canvas>
+<div id="hint">SPACE / ↑ to jump &nbsp;|&nbsp; Tap screen on mobile</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let players = [], objects = [], particles = [], floatingTexts = [];
+let running = false;
+let mode = 1;
+let gameTime = 0;
+let speed = 7;
+let hiScore = parseInt(localStorage.getItem('kitchenDashHi') || '0');
+
+const gravity = 0.7;
+const JUMP = -13;
+const groundY = 318;
+const neon = ["#0ff", "#f0f", "#0f0", "#ff0", "#09f"];
+let neonIdx = 0, neonTimer = 0;
+
+document.getElementById('hi-display').textContent = `Best: ${hiScore}`;
+
+// ── Player ──
+function Player(x, color, keyCode) {
+  this.x = x; this.y = groundY; this.vy = 0;
+  this.size = 24; this.color = color; this.keyCode = keyCode;
+  this.alive = true; this.score = 0; this.onGround = true;
+
+  this.update = () => {
+    this.vy += gravity;
+    this.y += this.vy;
+    if (this.y >= groundY) { this.y = groundY; this.vy = 0; this.onGround = true; }
+    else { this.onGround = false; }
+  };
+
+  this.draw = () => {
+    const s = this.size, x = this.x, y = this.y;
+    ctx.shadowBlur = 14; ctx.shadowColor = this.color;
+    // body
+    ctx.fillStyle = this.color;
+    ctx.fillRect(x, y, s, s);
+    // white face
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(x + 4, y + 6, s - 8, s - 10);
+    // eyes
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x + 6, y + 9, 4, 4);
+    ctx.fillRect(x + 14, y + 9, 4, 4);
+    // smile
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x + s / 2, y + 17, 4, 0, Math.PI);
+    ctx.stroke();
+    // chef hat
+    ctx.fillStyle = 'white';
+    ctx.fillRect(x + 4, y - 9, s - 8, 9);
+    ctx.fillRect(x + 8, y - 17, s - 16, 9);
+    ctx.shadowBlur = 0; ctx.lineWidth = 1;
+  };
+
+  this.jump = () => { if (this.onGround) { this.vy = JUMP; this.onGround = false; } };
+
+  this.die = () => {
+    this.alive = false;
+    for (let i = 0; i < 18; i++) particles.push(new Particle(this.x + this.size / 2, this.y + this.size / 2, this.color));
+  };
+}
+
+// ── Particle ──
+function Particle(x, y, color) {
+  this.x = x; this.y = y;
+  this.vx = (Math.random() - 0.5) * 10;
+  this.vy = (Math.random() - 0.5) * 10 - 4;
+  this.life = 1.0; this.color = color;
+  this.r = Math.random() * 4 + 2;
+
+  this.update = () => { this.x += this.vx; this.y += this.vy; this.vy += 0.35; this.life -= 0.028; };
+  this.draw = () => {
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle = this.color;
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  };
+}
+
+// ── Floating text ──
+function FloatingText(x, y, text, color) {
+  this.x = x; this.y = y; this.text = text; this.color = color; this.life = 1.0;
+  this.update = () => { this.y -= 1.5; this.life -= 0.022; };
+  this.draw = () => {
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle = this.color;
+    ctx.font = 'bold 15px Arial';
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.globalAlpha = 1;
+  };
+}
+
+// ── Spike ──
+function Spike(x) {
+  this.x = x; this.w = 26; this.h = 28; this.type = 'spike';
+  this.update = () => { this.x -= speed; };
+  this.draw = () => {
+    ctx.fillStyle = neon[neonIdx];
+    ctx.shadowBlur = 10; ctx.shadowColor = neon[neonIdx];
+    ctx.beginPath();
+    ctx.moveTo(this.x, groundY + 22);
+    ctx.lineTo(this.x + this.w / 2, groundY - this.h);
+    ctx.lineTo(this.x + this.w, groundY + 22);
+    ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+  };
+  this.hit = p =>
+    p.x + 3 < this.x + this.w - 3 &&
+    p.x + p.size - 3 > this.x + 3 &&
+    p.y + p.size > groundY - this.h + 6;
+}
+
+// ── Monster (angry frying pan) ──
+function Monster(x) {
+  this.x = x; this.y = groundY - 42; this.w = 34; this.h = 34; this.type = 'monster';
+  this.wobble = Math.random() * Math.PI * 2;
+  this.update = () => { this.x -= speed * 0.88; this.wobble += 0.12; };
+  this.draw = () => {
+    const yo = Math.sin(this.wobble) * 3;
+    // pan
+    ctx.fillStyle = '#999'; ctx.fillRect(this.x, this.y + yo, this.w, this.h);
+    ctx.fillStyle = '#666'; ctx.fillRect(this.x + this.w, this.y + 10 + yo, 18, 8);
+    // red eyes
+    ctx.fillStyle = '#ff003c';
+    ctx.fillRect(this.x + 6, this.y + 8 + yo, 7, 7);
+    ctx.fillRect(this.x + 21, this.y + 8 + yo, 7, 7);
+    // angry brows
+    ctx.strokeStyle = '#ff003c'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(this.x + 3, this.y + 5 + yo); ctx.lineTo(this.x + 15, this.y + 9 + yo);
+    ctx.moveTo(this.x + 31, this.y + 5 + yo); ctx.lineTo(this.x + 19, this.y + 9 + yo);
+    ctx.stroke();
+    // frown
+    ctx.beginPath(); ctx.arc(this.x + 17, this.y + 26 + yo, 5, Math.PI, 0); ctx.stroke();
+    ctx.lineWidth = 1;
+  };
+  this.hit = p =>
+    p.x + 2 < this.x + this.w && p.x + p.size - 2 > this.x &&
+    p.y + 2 < this.y + this.h && p.y + p.size - 2 > this.y;
+}
+
+// ── Platform ──
+function Platform(x) {
+  this.x = x; this.y = groundY - (Math.random() * 100 + 55); this.w = 100; this.h = 12; this.type = 'platform';
+  this.update = () => { this.x -= speed; };
+  this.draw = () => {
+    ctx.shadowBlur = 8; ctx.shadowColor = neon[neonIdx];
+    ctx.fillStyle = neon[neonIdx];
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.shadowBlur = 0;
+  };
+  this.stand = p => {
+    if (p.x + p.size > this.x && p.x < this.x + this.w &&
+        p.y + p.size >= this.y && p.y + p.size <= this.y + 16 && p.vy >= 0) {
+      p.y = this.y - p.size; p.vy = 0; p.onGround = true;
+    }
+  };
+}
+
+// ── Star/Coin ──
+function Star(x, y) {
+  this.x = x;
+  this.y = y !== undefined ? y : groundY - 30 - Math.random() * 80;
+  this.r = 10; this.type = 'star'; this.spin = 0; this.collected = false;
+  this.update = () => { this.x -= speed; this.spin += 0.08; };
+  this.draw = () => {
+    if (this.collected) return;
+    ctx.shadowBlur = 12; ctx.shadowColor = '#ff0';
+    ctx.fillStyle = '#ff0';
+    ctx.save();
+    ctx.translate(this.x, this.y); ctx.rotate(this.spin);
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i * Math.PI * 2) / 5 - Math.PI / 2;
+      const b = a + Math.PI / 5;
+      ctx.lineTo(Math.cos(a) * this.r, Math.sin(a) * this.r);
+      ctx.lineTo(Math.cos(b) * this.r * 0.42, Math.sin(b) * this.r * 0.42);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore(); ctx.shadowBlur = 0;
+  };
+  this.collect = p => {
+    if (this.collected) return;
+    const dx = p.x + p.size / 2 - this.x, dy = p.y + p.size / 2 - this.y;
+    if (dx * dx + dy * dy < (p.size / 2 + this.r) ** 2) {
+      this.collected = true;
+      p.score += 10;
+      floatingTexts.push(new FloatingText(this.x - 8, this.y - 10, '+10 ⭐', '#ff0'));
+    }
+  };
+}
+
+// ── Spawner ──
+function spawn() {
+  if (gameTime < 100) return;
+  if (objects.length > 0 && objects[objects.length - 1].x > canvas.width - 200) return;
+  const last = objects[objects.length - 1];
+  const r = Math.random();
+  if (r < 0.35 && last?.type !== 'spike') {
+    objects.push(new Spike(canvas.width));
+  } else if (r < 0.62) {
+    const p = new Platform(canvas.width);
+    objects.push(p);
+    if (Math.random() < 0.6) objects.push(new Star(p.x + p.w / 2, p.y - 22));
+  } else if (r < 0.85) {
+    objects.push(new Monster(canvas.width));
+  } else {
+    objects.push(new Star(canvas.width));
+  }
+}
+
+// ── Background ──
+let stars = [];
+for (let i = 0; i < 40; i++) {
+  stars.push({ x: Math.random() * 900, y: Math.random() * (groundY - 10), r: Math.random() * 1.2 + 0.3, b: Math.random() });
+}
+
+function drawBg() {
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, '#04040f');
+  g.addColorStop(0.7, '#080818');
+  g.addColorStop(1, '#0d0d22');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // twinkle stars
+  stars.forEach(s => {
+    const alpha = 0.2 + Math.abs(Math.sin(gameTime * 0.015 + s.b * 10)) * 0.4;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // ground line
+  ctx.shadowBlur = 16; ctx.shadowColor = neon[neonIdx];
+  ctx.strokeStyle = neon[neonIdx]; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, groundY + 22); ctx.lineTo(canvas.width, groundY + 22); ctx.stroke();
+  ctx.shadowBlur = 0; ctx.lineWidth = 1;
+}
+
+// ── Start ──
+function start(m) {
+  mode = m; players = []; objects = []; particles = []; floatingTexts = [];
+  running = true; gameTime = 0; speed = 7;
+  players.push(new Player(100, "#0ff", "Space"));
+  if (mode === 2) players.push(new Player(150, "#f0f", "ArrowUp"));
+  document.getElementById('mode-display').textContent = mode === 1 ? 'SPACE to jump' : 'P1: SPACE  |  P2: ↑';
+  loop();
+}
+
+// ── Controls ──
+document.addEventListener("keydown", e => {
+  if (!running) { if (e.key === "1") start(1); if (e.key === "2") start(2); return; }
+  players.forEach(p => { if (e.code === p.keyCode) p.jump(); });
+});
+
+canvas.addEventListener("touchstart", e => {
+  e.preventDefault();
+  if (!running) { start(1); return; }
+  players.forEach(p => { if (p.alive) p.jump(); });
+}, { passive: false });
+
+// ── Loop ──
+function loop() {
+  if (!running) return;
+  gameTime++;
+  if (gameTime % 350 === 0) speed = Math.min(speed + 0.5, 15);
+  neonTimer++; if (neonTimer > 50) { neonIdx = (neonIdx + 1) % neon.length; neonTimer = 0; }
+
+  drawBg();
+  spawn();
+
+  objects.forEach(o => {
+    o.update(); o.draw();
+    players.forEach(p => {
+      if (!p.alive) return;
+      if (o.hit && o.hit(p)) p.die();
+      if (o.stand) o.stand(p);
+      if (o.collect) o.collect(p);
+    });
+  });
+  objects = objects.filter(o => o.x > -160 && !o.collected);
+
+  particles.forEach(pt => { pt.update(); pt.draw(); });
+  particles = particles.filter(pt => pt.life > 0);
+
+  floatingTexts.forEach(ft => { ft.update(); ft.draw(); });
+  floatingTexts = floatingTexts.filter(ft => ft.life > 0);
+
+  players.forEach(p => { if (p.alive) { p.update(); p.draw(); p.score++; } });
+
+  // HUD
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = 'bold 14px Arial';
+  players.forEach((p, i) => ctx.fillText(`P${i + 1}: ${p.score}`, 10, 20 + i * 22));
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '11px Arial';
+  ctx.fillText(`${speed.toFixed(1)}x`, canvas.width - 36, 16);
+
+  const maxScore = Math.max(...players.map(p => p.score));
+  document.getElementById('score-display').textContent = `Score: ${maxScore}`;
+
+  if (players.every(p => !p.alive)) { running = false; gameOver(); return; }
+  requestAnimationFrame(loop);
+}
+
+// ── Game Over ──
+function gameOver() {
+  const maxScore = Math.max(...players.map(p => p.score));
+  const newHi = maxScore > hiScore;
+  if (newHi) { hiScore = maxScore; localStorage.setItem('kitchenDashHi', hiScore); document.getElementById('hi-display').textContent = `Best: ${hiScore}`; }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = 'center';
+
+  ctx.font = 'bold 44px Arial'; ctx.shadowBlur = 24; ctx.shadowColor = '#f0f';
+  ctx.fillStyle = '#f0f'; ctx.fillText('GAME OVER', canvas.width / 2, 130);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '22px Arial'; ctx.fillStyle = 'white';
+  players.forEach((p, i) => ctx.fillText(`Player ${i + 1}: ${p.score}`, canvas.width / 2, 188 + i * 36));
+
+  if (newHi && maxScore > 0) {
+    ctx.font = 'bold 19px Arial'; ctx.fillStyle = '#ff0';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#ff0';
+    ctx.fillText('🏆 New High Score!', canvas.width / 2, 192 + players.length * 36);
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.font = '17px Arial'; ctx.fillStyle = '#0ff';
+  ctx.fillText('Press 1 (Solo)  or  2 (Co-op)  to restart', canvas.width / 2, 305);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = '13px Arial';
+  ctx.fillText('Tap screen to restart', canvas.width / 2, 328);
+  ctx.textAlign = 'left';
+  document.getElementById('score-display').textContent = `Score: ${maxScore}`;
+}
+
+// ── Title screen ──
+(function titleScreen() {
+  ctx.fillStyle = '#04040f'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    ctx.globalAlpha = 0.3 + s.b * 0.4; ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 46px Arial'; ctx.shadowBlur = 28; ctx.shadowColor = '#0ff';
+  ctx.fillStyle = '#0ff'; ctx.fillText('🍳 KITCHEN DASH', canvas.width / 2, 148);
+  ctx.shadowBlur = 0;
+  ctx.font = '19px Arial'; ctx.fillStyle = 'white';
+  ctx.fillText('Press 1 for Solo  |  Press 2 for Co-op', canvas.width / 2, 210);
+  ctx.fillText('Tap screen to play solo', canvas.width / 2, 242);
+  ctx.font = '14px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText('Jump over spikes & avoid the angry pans!', canvas.width / 2, 296);
+  ctx.fillText('⭐ Collect stars for +10 bonus points', canvas.width / 2, 322);
+  ctx.textAlign = 'left';
+})();
+</script>
+
+</body>
+</html>

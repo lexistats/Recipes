@@ -1,0 +1,518 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
+
+/* ── Reset & Base ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #FDF8F0;
+    color: #3D2B1F;
+    font-family: 'Lato', sans-serif;
+}
+
+/* ── Header / Hero ── */
+.header {
+    padding: 0;
+}
+
+.header-image {
+    background-image: url('../images/wildflowers.jpeg');
+    height: 480px;
+    background-size: cover;
+    background-position: center top;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%);
+}
+
+.header-image h1 {
+    position: relative;
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    margin: 0;
+}
+
+/* ── Navigation ── */
+nav {
+    background-color: #3D2B1F;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+nav a {
+    padding: 14px 18px;
+    color: #E8D5B7;
+    text-decoration: none;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+nav a:hover {
+    background-color: #C17A5A;
+    color: #fff;
+}
+
+/* ── Main Content ── */
+.mainbody {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 50px 30px 80px;
+    text-align: center;
+}
+
+.mainbody > h2:first-child {
+    margin-top: 0;
+}
+
+.section-intro {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #7A5C48;
+    margin-bottom: 40px;
+}
+
+/* ── Category Cards Grid ── */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 28px;
+    margin-top: 10px;
+}
+
+.card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(61,43,31,0.10);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(61,43,31,0.18);
+}
+
+.card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background-color: #E8D5B7;
+    display: block;
+}
+
+.card-img-placeholder {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(135deg, #E8D5B7 0%, #C17A5A22 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+
+.card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-body h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #3D2B1F;
+    margin: 0 0 8px;
+}
+
+.card-body p {
+    font-size: 0.9rem;
+    color: #7A5C48;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.card-link {
+    margin-top: auto;
+    padding-top: 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #C17A5A;
+}
+
+/* ── Page Title above grid ── */
+.page-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #3D2B1F;
+    margin: 0 0 8px;
+}
+
+.divider {
+    width: 60px;
+    height: 3px;
+    background-color: #C17A5A;
+    border: none;
+    margin: 0 auto 16px;
+    border-radius: 2px;
+}
+
+/* ── Footer ── */
+.footer {
+    background-color: #3D2B1F;
+    color: #E8D5B7;
+    text-align: center;
+    padding: 16px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+/* ── Category Page Header ── */
+.category-header {
+    position: relative;
+    background-image: url('../images/wildflowers.jpeg');
+    background-size: cover;
+    background-position: center;
+    color: #E8D5B7;
+    text-align: center;
+    padding: 80px 20px 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.62) 100%);
+}
+
+.category-header h1,
+.category-header p {
+    position: relative;
+}
+
+.category-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    margin: 0 0 8px;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.category-header p {
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    color: #E8D5B7;
+    margin: 0;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+}
+
+/* ── Recipe List Container ── */
+.recipe-list {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+}
+
+/* ── Individual Recipe Card ── */
+.recipe-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(61,43,31,0.10);
+    overflow: hidden;
+}
+
+.recipe-card-header {
+    background: linear-gradient(135deg, #3D2B1F 0%, #6B4226 100%);
+    padding: 24px 28px 20px;
+}
+
+.recipe-card-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    color: #fff;
+    margin: 0 0 10px;
+}
+
+.recipe-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.tag {
+    background-color: rgba(255,255,255,0.15);
+    color: #E8D5B7;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.recipe-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.recipe-meta span {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    color: #C9A882;
+}
+
+.recipe-meta span strong {
+    color: #fff;
+}
+
+/* ── Recipe Body ── */
+.recipe-body {
+    padding: 28px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 32px;
+}
+
+@media (max-width: 640px) {
+    .recipe-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+.recipe-ingredients h3,
+.recipe-directions h3,
+.recipe-notes h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: #3D2B1F;
+    border-bottom: 2px solid #E8D5B7;
+    padding-bottom: 6px;
+    margin: 0 0 14px;
+}
+
+.recipe-ingredients ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recipe-ingredients ul li {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    color: #3D2B1F;
+    padding: 5px 0;
+    border-bottom: 1px solid #F3EDE4;
+    line-height: 1.4;
+}
+
+.recipe-directions ol {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.recipe-directions ol li {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    color: #3D2B1F;
+    padding: 6px 0;
+    line-height: 1.6;
+}
+
+.recipe-notes {
+    grid-column: 1 / -1;
+    background: #FDF8F0;
+    border-left: 4px solid #C17A5A;
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+}
+
+.recipe-notes p {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.88rem;
+    color: #5A3E2B;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ── New Home Page Sections ── */
+.section-block {
+    margin-top: 70px;
+    text-align: center;
+}
+
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #3D2B1F;
+    margin: 0 0 8px;
+}
+
+/* ── YouTube Video ── */
+.video-wrapper {
+    position: relative;
+    max-width: 800px;
+    margin: 24px auto 0;
+    padding-top: 56.25%;
+}
+
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(61,43,31,0.15);
+}
+
+/* ── Nested List ── */
+.essentials-list {
+    display: inline-block;
+    text-align: left;
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #3D2B1F;
+    line-height: 2.2;
+    margin-top: 16px;
+}
+
+.essentials-list ul {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: #7A5C48;
+    line-height: 1.9;
+    margin: 2px 0 10px;
+}
+
+/* ── Tableau ── */
+.tableau-wrapper {
+    max-width: 960px;
+    margin: 24px auto 0;
+}
+
+.tableau-scale-outer {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.tableau-scale-inner {
+    transform-origin: top center;
+    flex-shrink: 0;
+}
+
+/* ── Back to Top ── */
+.back-to-top {
+    margin-top: 60px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.back-to-top a {
+    color: #C17A5A;
+    text-decoration: none;
+}
+
+.back-to-top a:hover {
+    color: #3D2B1F;
+}
+
+/* ── Game Card ── */
+.game-card {
+    display: inline-block;
+    text-decoration: none;
+    margin-top: 16px;
+}
+
+.game-card-inner {
+    background: linear-gradient(135deg, #05051a 0%, #0d0d2e 100%);
+    border: 2px solid rgba(0,255,255,0.4);
+    border-radius: 12px;
+    padding: 28px 48px;
+    box-shadow: 0 0 24px rgba(0,255,255,0.12);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.game-card:hover .game-card-inner {
+    transform: translateY(-4px);
+    box-shadow: 0 0 40px rgba(0,255,255,0.25);
+    border-color: rgba(0,255,255,0.8);
+}
+
+.game-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0ff;
+    text-shadow: 0 0 12px rgba(0,255,255,0.6);
+    margin-bottom: 8px;
+}
+
+.game-desc {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.game-btn {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #0ff;
+}
